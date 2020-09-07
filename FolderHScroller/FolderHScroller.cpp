@@ -288,9 +288,9 @@ int WINAPI _tWinMain(
 	g_hinstThis = hInstance;
 	bool bKill = false;
 	for (int i = 1; i < __argc; i++) {
-		if (_tcscmp(__targv[i], L"/noicon") == 0) {
+		if (_tcscmp(__targv[i], _T("/noicon")) == 0) {
 			g_bNoIcon = true;
-		} else if (_tcscmp(__targv[i], L"/kill") == 0) {
+		} else if (_tcscmp(__targv[i], _T("/kill")) == 0) {
 			bKill = true;
 		}
 	}
