@@ -280,10 +280,10 @@ LRESULT CALLBACK MainWndProc(
 // main
 
 int WINAPI _tWinMain(
-	HINSTANCE hInstance,
-	HINSTANCE /*hPrevInstance*/,
-	LPTSTR /*pszCmdLine*/,
-	int /*nShowCmd*/)
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE /*hPrevInstance*/,
+	_In_ LPTSTR /*pszCmdLine*/,
+	_In_ int /*nShowCmd*/)
 {
 	g_hinstThis = hInstance;
 	bool bKill = false;
