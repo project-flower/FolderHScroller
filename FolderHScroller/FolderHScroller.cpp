@@ -335,5 +335,5 @@ int WINAPI _tWinMain(
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	return msg.wParam;
+	return static_cast<int>(msg.wParam);
 }
