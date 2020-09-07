@@ -13,7 +13,6 @@
 
 #include <cstdlib>
 #include <vector>
-#include <set>
 
 #include "resource.h"
 
@@ -21,9 +20,6 @@
 // constant
 
 #define WM_NOTIFY_ICON		(WM_APP+100)
-
-#define WATCH_TIMER_ID		1
-#define WATCH_TIMER_ELAPSE	200
 
 //////////////////////////////////////////////////////////////////////////////
 // type
@@ -49,19 +45,20 @@ const TCHAR g_szTerminateName[] = APP_UNIQUE_NAME _T(":Terminate");
 // global variable
 
 HINSTANCE g_hinstThis = nullptr;
+HWND g_hwndMain = nullptr;
 
 HANDLE g_hEventTerminate = nullptr;
 HANDLE g_hMutexSingleton = nullptr;
+HWINEVENTHOOK hWinEventHook = nullptr;
 
 bool g_bNoIcon = false;
 
-UINT_PTR g_nTimerID;
-
-int g_nCurStep = 0;
-
-std::set<HWND> g_setWatchedWnds[2];
-
 NOTIFYICONDATA g_nid;
+
+//////////////////////////////////////////////////////////////////////////////
+// global function
+
+void SetStyle(HWND);
 
 //////////////////////////////////////////////////////////////////////////////
 // window operation
@@ -117,10 +114,29 @@ HWND FindChild(HWND hwndParent, const ChildInfo* pChilds) {
 	return hwndResult;
 }
 
+VOID CALLBACK WinEventProc(
+	HWINEVENTHOOK hWinEventHook,
+	DWORD         event,
+	HWND          hwnd,
+	LONG          idObject,
+	LONG          idChild,
+	DWORD         idEventThread,
+	DWORD         dwmsEventTime) {
+	if (WaitForSingleObject(g_hEventTerminate, 1) != WAIT_TIMEOUT) {
+		if (g_hwndMain != nullptr) {
+			DestroyWindow(g_hwndMain);
+		}
+
+		return;
+	}
+
+	SetStyle(hwnd);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // explorer operation
 
-BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM /*lParam*/) {
+void SetStyle(HWND hwnd) {
 	static const ChildInfo aciChilds[] = {
 		{ _T("ShellTabWindowClass"), nullptr, 0 },
 		{ _T("DUIViewWndClassName"), nullptr, 0 },
@@ -130,33 +146,30 @@ BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM /*lParam*/) {
 		{ _T("SysTreeView32"), nullptr, 100 },
 		{ nullptr, nullptr, -1 }
 	};
-	if (IsWindowVisible(hwnd) &&
-		(g_setWatchedWnds[g_nCurStep].find(hwnd) ==
-			g_setWatchedWnds[g_nCurStep].end()))
-	{
-		int nNextStep = (g_nCurStep+1)%2;
-		if (!CheckWndClassName(hwnd, _T("CabinetWClass"))) {
-			g_setWatchedWnds[nNextStep].insert(hwnd);
-		} else {
-			HWND hwndTree = FindChild(hwnd, aciChilds);
-			if (hwndTree != nullptr) {
-				g_setWatchedWnds[nNextStep].insert(hwnd);
-				LONG nStyle = GetWindowLong(hwndTree, GWL_STYLE);
-				if ((nStyle & TVS_NOHSCROLL) != 0) {
-					nStyle &= ~TVS_NOHSCROLL;
-					SetWindowLong(hwndTree, GWL_STYLE, nStyle);
-				}
+
+	if (!IsWindowVisible(hwnd)) {
+		return;
+	}
+
+	if (CheckWndClassName(hwnd, _T("CabinetWClass"))) {
+		HWND hwndTree = FindChild(hwnd, aciChilds);
+		if (hwndTree != nullptr) {
+			LONG nStyle = GetWindowLong(hwndTree, GWL_STYLE);
+			if ((nStyle & TVS_NOHSCROLL) != 0) {
+				nStyle &= ~TVS_NOHSCROLL;
+				SetWindowLong(hwndTree, GWL_STYLE, nStyle);
 			}
 		}
 	}
+}
+
+BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM /*lParam*/) {
+	SetStyle(hwnd);
 	return TRUE;
 }
 
 auto AdjustExplorer = []() {
-	int nNextStep = (g_nCurStep+1)%2;
-	g_setWatchedWnds[nNextStep].clear();
 	EnumWindows(EnumExplorerProc, 0);
-	g_nCurStep = nNextStep;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -226,15 +239,18 @@ LRESULT CALLBACK MainWndProc(
 	case WM_CREATE:
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 		RegisterTraskTray(hwnd);
-		g_nTimerID = SetTimer(
-			hwnd,
-			WATCH_TIMER_ID, WATCH_TIMER_ELAPSE,
-			nullptr);
+		hWinEventHook = SetWinEventHook(
+			EVENT_OBJECT_SHOW,
+			EVENT_OBJECT_SHOW,
+			nullptr,
+			WinEventProc,
+			0,
+			0,
+			(WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
+		AdjustExplorer();
 		break;
 	case WM_DESTROY:
-		if (g_nTimerID != 0) {
-			KillTimer(hwnd, g_nTimerID);
-		}
+		UnhookWinEvent(hWinEventHook);
 		UnregisterTraskTray();
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 		PostQuitMessage(0);
@@ -244,15 +260,6 @@ LRESULT CALLBACK MainWndProc(
 		break;
 	case WM_ENDSESSION:
 		CloseWindow(hwnd);
-		break;
-	case WM_TIMER:
-		if (wParam == g_nTimerID) {
-			if (WaitForSingleObject(g_hEventTerminate, 1) != WAIT_TIMEOUT) {
-				DestroyWindow(hwnd);
-				break;
-			}
-			AdjustExplorer();
-		}
 		break;
 	case WM_NOTIFY_ICON:
 		switch (lParam) {
@@ -320,13 +327,13 @@ int WINAPI _tWinMain(
 	if (RegisterClass(&wc) == 0) {
 		return 0;
 	}
-	HWND hwndMain = CreateWindow(
+	g_hwndMain = CreateWindow(
 		g_szAppUniqueName, g_szAppUIName,
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		nullptr, nullptr,
 		hInstance, nullptr);
-	if (hwndMain == nullptr) {
+	if (g_hwndMain == nullptr) {
 		return 0;
 	}
 	MSG msg;
