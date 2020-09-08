@@ -1,0 +1,147 @@
+FolderHScroller - A tool to append a horizontal scrollbar to every folder pane
+Programed by Project Flower
+Original Programed by Manuke
+
+FolderHScroller (PF Forked) is Fork of FolderHScroller made by Manuke
+(https://quagma.sakura.ne.jp/manuke/folderhscroller.html).
+
+This application has the following features compared to the original.
+-It also supports dialogs such as opening a file / saving with a name.
+-The polling by the timer is not performed to reduce the load.
+
+------------------------------------------------------------------------------
+ABOUT:
+
+FolderHScroller is a resident software to append a horizontal scrollbar to
+every folder pane of the Explorer on Windows Vista or later versions.
+
+In Windows Vista, Microsoft had removed the horizontal scrollbar from the
+folder pane of the Explorer.
+Moreover, in Windows 7, Microsoft had removed the horizontal auto-scroll
+function of the folder pane.
+Therefore, we feel inconvenience to the Explorer on Windows 7 or later versions
+if the width of the folder tree is larger than the folder pane.
+
+When you execute FolderHScroller, it resides into the system and keeps watch
+on the Explorer windows, and it appends a horizontal scrollbar to every folder
+pane.
+As a result, you can view deep nested folders with the Explorer.
+
+------------------------------------------------------------------------------
+SYSTEM REQUIREMENT:
+
+MS Windows Vista/7/8/8.1/10 (32 or 64 bit version)
+
+------------------------------------------------------------------------------
+FILES:
+
+FolderHScroller.exe
+    an executable program file
+
+x64/FolderHScroller.exe
+    an executable program file (64-bit)
+
+FolderHScroller-ja.txt
+    a text file of the explanation in Japanese
+
+FolderHScroller-en.txt
+    a text file of the explanation in English(this file)
+
+------------------------------------------------------------------------------
+USAGE:
+
+When you execute FolderHScroller, it appends an icon to the notification area,
+and it starts to keep watch.
+FolderHScroller works to append a horizontal scrollbar to every folder pane
+of the Explorer automatically. You will not need to operate it.
+
+If you want to finish the software, click the icon in the notification area
+and select the "Exit" menu.
+After the operation, the folder panes will not display horizontal scrollbars.
+(But, the horizontal scrollbars that the software has already appended are
+not removed.)
+
+# You can hide the icon of the software from the notification area by
+# the "/noicon" option.
+
+------------------------------------------------------------------------------
+COMMAND LINE OPTION:
+
+/noicon
+
+FolderHScroller will not append its icon to the notification area.
+In this case, if you want to finish the software, use the Task Manager for
+terminating the process, or use the "/kill" option.
+
+/kill
+
+It terminates the FolderHScroller process that is running in the system.
+Use it when you have hidden the icon by the "/noicon" option.
+
+------------------------------------------------------------------------------
+DETAIL:
+
+The Windows Explorer uses a TreeView control for the folder pane.
+A TreeView control usually displays a horizontal scrollbar automatically if
+the content is larger than its width.
+However, in Windows Vista/7, the Explorer sets a special flag(TVS_NOHSCROLL)
+to the window style of the TreeView control, and the horizontal scrollbar is
+hidden.
+(I don't know the reason. Is it simply a problem of the interface design?)
+
+While FolderHScroller is running, detects the display of Explorer and common-
+dialogs, and it removes TVS_NOHSCROLL from the window style of the folder
+panes.
+Therefore, the horizontal scrollbars are displayed if necessary.
+
+------------------------------------------------------------------------------
+VERSIONS:
+
+2020-09-08 : Ver. 2.00
+
+ÅEPF Forked
+
+2010-08-10 : Ver. 1.00
+
+The first version by Manuke.
+
+------------------------------------------------------------------------------
+MIT LICENSE:
+
+Copyright (c) 2020 Project Flower
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+------------------------------------------------------------------------------
+AGREEMENT:
+
+Project Flower is not responsible for any damages caused by this software.
+Also, since the original author, Manuke, is not involved in this fork, please
+refrain from making inquiries.
+
+------------------------------------------------------------------------------
+SOURCE CODES:
+
+This program is available on the GitHub repository.
+https://github.com/project-flower/FolderHScroller
+
+------------------------------------------------------------------------------
+SPECIAL THANKS:
+
+Thanks to Manuke, the original author of FolderHScroller.

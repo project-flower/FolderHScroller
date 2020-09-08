@@ -1,0 +1,146 @@
+FolderHScroller (PF Forked) - フォルダ・ペイン横スクロールバー付加ツール
+Programed by Project Flower
+Original Programed by Manuke
+
+FolderHScroller (PF Forked)は、
+Manuke氏作 FolderHScroller
+(https://quagma.sakura.ne.jp/manuke/folderhscroller.html) のフォークです。
+
+オリジナルと比較し以下の特長があります。
+・ファイルを開く／名前を付けて保存等のダイアログにも対応しています。
+・タイマによるポーリングを行わず負荷を小さくしています。
+
+------------------------------------------------------------------------------
+◎概要
+
+FolderHScrollerは、Windows Vista以降用エクスプローラのフォルダ・ペインに横スクロ
+ールバーを追加するための常駐ソフトです。
+
+Windows XPからVistaへのアップグレードにあたって、エクスプローラのフォルダ・ペイ
+ンでは横スクロールバーが表示されなくなっています。
+更にWindows 7では、Vistaにあったフォルダ・ペインの自動横スクロール機能も削除さ
+れてしまいました。
+このため、Windows 7以降のエクスプローラにおいては、横に収まりきらないような深い
+フォルダ階層構造を表示することができず、不便を強いられます。
+
+本プログラムを起動すると、画面にエクスプローラ・ウィンドウが存在するかを常駐監
+視し、そのフォルダ・ペインに横スクロールバーを追加するよう機能します。
+これにより、深い階層構造の中でもエクスプローラでフォルダを確認することが可能に
+なります。
+
+------------------------------------------------------------------------------
+◎使用環境
+
+MS Windows Vista/7/8/8.1/10（32／64ビット版）
+
+------------------------------------------------------------------------------
+◎ファイル
+
+FolderHScroller.exe
+    プログラム本体
+
+x64/FolderHScroller.exe
+    プログラム本体 (64-bit)
+
+FolderHScroller-ja.txt
+    日本語版説明テキスト（このファイル）
+
+FolderHScroller-en.txt
+    英語版説明テキスト
+
+------------------------------------------------------------------------------
+◎使い方
+
+FolderHScrollerを起動すると、タスクトレイにアイコンが表示され、常駐監視が開始さ
+れます。
+動作中は特に操作の必要はなく、自動的にエクスプローラのフォルダ・ペインへ横スク
+ロールバーが付加されます。
+
+プログラムを終了させたい場合、タスクトレイのアイコンを右クリックし、ポップアッ
+プメニューから「終了」を選んでください。
+以後、横スクロールバーは付加されなくなります。
+（但し、終了前に横スクロールバーが付加されたものは元に戻りません）
+
+※コマンドラインの/noiconオプションでタスクトレイのアイコン表示を抑制することも
+できます。
+
+------------------------------------------------------------------------------
+◎起動オプション
+
+/noicon
+
+FolderHScrollerが常駐監視中でも、タスクトレイにアイコンが表示されなくなります。
+この状態でFolderHScrollerを終了させたい場合、タスクマネージャ等でプロセスを終了
+させるか、/killオプションを使ってください。
+
+/kill
+
+現在常駐しているFolderHScrollerを終了させます。
+オプション/noiconでアイコンを消しているときにお使いください。
+
+------------------------------------------------------------------------------
+◎動作説明
+
+エクスプローラは、フォルダ・ペインの表示にTreeViewコントロールを使用しています。
+TreeViewは通常、表示する内容が横幅より大きいと自動的に横スクロールバーを表示し
+てくれます。
+ところがWindows Vista/7では、このTreeViewのウィンドウスタイルに対して特別なフラ
+グ（TVS_NOHSCROLL）をセットし、横スクロールバーの表示を抑制してしまっています。
+（理由は不明。単にデザイン上の問題？）
+
+FolderHScrollerはプログラム実行中、エクスプローラ及びコモン ダイアログの表示を
+検知し、そのフォルダ・ペインのウィンドウスタイルからTVS_NOHSCROLLを取り除きます。
+その結果、必要に応じて横スクロールバーが表示されるようになります。
+
+------------------------------------------------------------------------------
+◎更新履歴
+
+2020-09-08 : Ver. 2.00
+
+・PF Forked
+
+2010-08-10 : Ver. 1.00
+
+・Manuke氏による最初のバージョン。
+
+------------------------------------------------------------------------------
+◎MIT License
+
+Copyright (c) 2020 Project Flower
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+------------------------------------------------------------------------------
+◎お願い
+
+このソフトウェアに起因するいかなる損害に対してもProject Flowerは責任を負いませ
+ん。
+又、原作者のManuke氏は本フォークに関与しておりませんので、問い合わせ等はお控え
+下さい。
+
+------------------------------------------------------------------------------
+◎ソースコード
+
+以下 GitHubリポジトリで公開しています。
+https://github.com/project-flower/FolderHScroller
+
+------------------------------------------------------------------------------
+◎謝辞
+
+FolderHScroller原作者のManuke氏に心より感謝致します。
