@@ -151,14 +151,28 @@ void SetStyle(HWND hwnd) {
 		return;
 	}
 
-	if (CheckWndClassName(hwnd, _T("CabinetWClass"))) {
-		HWND hwndTree = FindChild(hwnd, aciChilds);
-		if (hwndTree != nullptr) {
-			LONG_PTR nStyle = GetWindowLongPtr(hwndTree, GWL_STYLE);
-			if ((nStyle & TVS_NOHSCROLL) != 0) {
-				nStyle &= ~TVS_NOHSCROLL;
-				SetWindowLongPtr(hwndTree, GWL_STYLE, nStyle);
-			}
+	const int CLASSNAME_MAX = 128;
+	TCHAR szClassName[CLASSNAME_MAX + 1];
+	szClassName[CLASSNAME_MAX] = _T('\0');
+
+	if (GetClassName(hwnd, szClassName, CLASSNAME_MAX) == 0) {
+		return;
+	}
+
+	HWND hwndTree = nullptr;
+
+	if (_tcsicmp(szClassName, _T("CabinetWClass")) == 0) {
+		hwndTree = FindChild(hwnd, aciChilds);
+	}
+	else if (_tcsicmp(szClassName, _T("#32770")) == 0) {
+		hwndTree = FindChild(hwnd, &aciChilds[1]);
+	}
+
+	if (hwndTree != nullptr) {
+		LONG_PTR nStyle = GetWindowLongPtr(hwndTree, GWL_STYLE);
+		if ((nStyle & TVS_NOHSCROLL) != 0) {
+			nStyle &= ~TVS_NOHSCROLL;
+			SetWindowLongPtr(hwndTree, GWL_STYLE, nStyle);
 		}
 	}
 }
