@@ -154,10 +154,10 @@ void SetStyle(HWND hwnd) {
 	if (CheckWndClassName(hwnd, _T("CabinetWClass"))) {
 		HWND hwndTree = FindChild(hwnd, aciChilds);
 		if (hwndTree != nullptr) {
-			LONG nStyle = GetWindowLong(hwndTree, GWL_STYLE);
+			LONG_PTR nStyle = GetWindowLongPtr(hwndTree, GWL_STYLE);
 			if ((nStyle & TVS_NOHSCROLL) != 0) {
 				nStyle &= ~TVS_NOHSCROLL;
-				SetWindowLong(hwndTree, GWL_STYLE, nStyle);
+				SetWindowLongPtr(hwndTree, GWL_STYLE, nStyle);
 			}
 		}
 	}
