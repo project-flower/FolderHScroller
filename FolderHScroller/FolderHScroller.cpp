@@ -130,6 +130,10 @@ VOID CALLBACK WinEventProc(
 		return;
 	}
 
+	if (!CheckWndClassName(hwnd, _T("SysTreeView32"))) {
+		return;
+	}
+
 	SetStyle(hwnd);
 }
 
@@ -137,6 +141,15 @@ VOID CALLBACK WinEventProc(
 // explorer operation
 
 void SetStyle(HWND hwnd) {
+    LONG_PTR nStyle = GetWindowLongPtr(hwnd, GWL_STYLE);
+
+    if ((nStyle & TVS_NOHSCROLL) != 0) {
+        nStyle &= ~TVS_NOHSCROLL;
+        SetWindowLongPtr(hwnd, GWL_STYLE, nStyle);
+    }
+}
+
+BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM /*lParam*/) {
 	static const ChildInfo aciChilds[] = {
 		{ _T("ShellTabWindowClass"), nullptr, 0 },
 		{ _T("DUIViewWndClassName"), nullptr, 0 },
@@ -148,7 +161,7 @@ void SetStyle(HWND hwnd) {
 	};
 
 	if (!IsWindowVisible(hwnd)) {
-		return;
+		return TRUE;
 	}
 
 	const int CLASSNAME_MAX = 128;
@@ -156,7 +169,7 @@ void SetStyle(HWND hwnd) {
 	szClassName[CLASSNAME_MAX] = _T('\0');
 
 	if (GetClassName(hwnd, szClassName, CLASSNAME_MAX) == 0) {
-		return;
+		return TRUE;
 	}
 
 	HWND hwndTree = nullptr;
@@ -169,16 +182,9 @@ void SetStyle(HWND hwnd) {
 	}
 
 	if (hwndTree != nullptr) {
-		LONG_PTR nStyle = GetWindowLongPtr(hwndTree, GWL_STYLE);
-		if ((nStyle & TVS_NOHSCROLL) != 0) {
-			nStyle &= ~TVS_NOHSCROLL;
-			SetWindowLongPtr(hwndTree, GWL_STYLE, nStyle);
-		}
+		SetStyle(hwndTree);
 	}
-}
 
-BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM /*lParam*/) {
-	SetStyle(hwnd);
 	return TRUE;
 }
 
@@ -254,8 +260,8 @@ LRESULT CALLBACK MainWndProc(
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 		RegisterTraskTray(hwnd);
 		hWinEventHook = SetWinEventHook(
-			EVENT_OBJECT_SHOW,
-			EVENT_OBJECT_SHOW,
+			EVENT_OBJECT_CREATE,
+			EVENT_OBJECT_CREATE,
 			nullptr,
 			WinEventProc,
 			0,
