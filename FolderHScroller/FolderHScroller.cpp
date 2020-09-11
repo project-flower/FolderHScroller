@@ -55,6 +55,8 @@ bool g_bNoIcon = false;
 
 NOTIFYICONDATA g_nid;
 
+UINT WM_TASKBARCREATED = 0;
+
 //////////////////////////////////////////////////////////////////////////////
 // global function
 
@@ -195,7 +197,7 @@ auto AdjustExplorer = []() {
 //////////////////////////////////////////////////////////////////////////////
 // tasktray operation
 
-auto RegisterTraskTray = [](HWND hwnd) {
+auto RegisterTaskTray = [](HWND hwnd) {
 	memset(&g_nid, 0, sizeof(g_nid));
 	if (!g_bNoIcon) {
 		g_nid.cbSize = sizeof(g_nid);
@@ -213,7 +215,7 @@ auto RegisterTraskTray = [](HWND hwnd) {
 	}
 };
 
-auto UnregisterTraskTray = []() {
+auto UnregisterTaskTray = []() {
 	if (g_nid.cbSize != 0) {
 		Shell_NotifyIcon(NIM_DELETE, &g_nid);
 	}
@@ -258,7 +260,17 @@ LRESULT CALLBACK MainWndProc(
 	switch (nMessage) {
 	case WM_CREATE:
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
-		RegisterTraskTray(hwnd);
+		RegisterTaskTray(hwnd);
+
+		{
+			const UINT uiMessage = RegisterWindowMessage(_T("TaskbarCreated"));
+
+			if (uiMessage != 0)
+			{
+				WM_TASKBARCREATED = uiMessage;
+			}
+		}
+
 		hWinEventHook = SetWinEventHook(
 			EVENT_OBJECT_CREATE,
 			EVENT_OBJECT_CREATE,
@@ -271,7 +283,7 @@ LRESULT CALLBACK MainWndProc(
 		break;
 	case WM_DESTROY:
 		UnhookWinEvent(hWinEventHook);
-		UnregisterTraskTray();
+		UnregisterTaskTray();
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 		PostQuitMessage(0);
 		break;
@@ -297,6 +309,11 @@ LRESULT CALLBACK MainWndProc(
 		}
 		break;
 	default:
+		if ((nMessage == WM_TASKBARCREATED) && (WM_TASKBARCREATED > 0)) {
+			RegisterTaskTray(hwnd);
+			break;
+		}
+
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 		break;
 	}
