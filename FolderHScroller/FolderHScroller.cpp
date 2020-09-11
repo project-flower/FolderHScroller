@@ -25,7 +25,7 @@
 // global constant
 
 #define APP_UI_NAME         _T("FolderHScroller")
-#define APP_UNIQUE_NAME     _T("Manuke:FolderHorizontalScroller")
+#define APP_UNIQUE_NAME     _T("PF:FolderHorizontalScroller")
 
 #define CLASSNAME_SYSTREEVIEW32 _T("SysTreeView32")
 
