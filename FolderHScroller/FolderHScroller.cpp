@@ -22,19 +22,12 @@
 #define WM_NOTIFY_ICON		(WM_APP+100)
 
 //////////////////////////////////////////////////////////////////////////////
-// type
-
-struct ChildInfo {
-	const TCHAR* pszClassName;
-	const TCHAR* pszCaption;
-	int nID;
-};
-
-//////////////////////////////////////////////////////////////////////////////
 // global constant
 
 #define APP_UI_NAME         _T("FolderHScroller")
 #define APP_UNIQUE_NAME     _T("Manuke:FolderHorizontalScroller")
+
+#define CLASSNAME_SYSTREEVIEW32 _T("SysTreeView32")
 
 const TCHAR g_szAppUIName[] = APP_UI_NAME;
 const TCHAR g_szAppUniqueName[] = APP_UNIQUE_NAME;
@@ -75,45 +68,22 @@ auto CheckWndClassName = [](HWND hwnd, const TCHAR* pszClassName) -> bool {
 	return _tcsicmp(szClassName, pszClassName) == 0;
 };
 
-auto CheckWndCaption = [](HWND hwnd, const TCHAR* pszCaption) -> bool {
-	const int CAPTION_MAX = 128;
-	TCHAR szCaption[CAPTION_MAX+1];
-	szCaption[CAPTION_MAX] = _T('\0');
-	if (GetWindowText(hwnd, szCaption, CAPTION_MAX) == 0) {
-		szCaption[0] = _T('\0');
-	}
-	return _tcsicmp(szCaption, pszCaption) == 0;
-};
+HWND FindChild(HWND hwnd, const TCHAR* szClassName) {
+	for (HWND hwndChild = GetWindow(hwnd, GW_CHILD);
+		hwndChild;
+		hwndChild = GetWindow(hwndChild, GW_HWNDNEXT)) {
+		if (CheckWndClassName(hwndChild, szClassName)) {
+			return hwndChild;
+		}
 
-HWND FindChild(HWND hwndParent, const ChildInfo* pChilds) {
-	HWND hwndResult = nullptr;
-	for (
-		HWND hwndChild = GetWindow(hwndParent, GW_CHILD);
-		hwndChild != nullptr;
-		hwndChild = GetWindow(hwndChild, GW_HWNDNEXT))
-	{
-		if (IsWindowVisible(hwndChild) &&
-			((pChilds->pszClassName == nullptr) ||
-				CheckWndClassName(hwndChild, pChilds->pszClassName)) &&
-			((pChilds->pszCaption == nullptr) ||
-				CheckWndCaption(hwndChild, pChilds->pszCaption)) &&
-			((pChilds->nID == -1) ||
-				(GetDlgCtrlID(hwndChild) == pChilds->nID)))
-		{
-			if (((pChilds+1)->pszClassName == nullptr) &&
-				((pChilds+1)->pszCaption == nullptr) &&
-				((pChilds+1)->nID == -1))
-			{
-				hwndResult = hwndChild;
-			} else {
-				hwndResult = FindChild(hwndChild, pChilds+1);
-			}
-			if (hwndResult != nullptr) {
-				break;
-			}
+		const HWND hwndFound = FindChild(hwndChild, szClassName);
+
+		if (hwndFound) {
+			return hwndFound;
 		}
 	}
-	return hwndResult;
+
+	return nullptr;
 }
 
 VOID CALLBACK WinEventProc(
@@ -132,7 +102,7 @@ VOID CALLBACK WinEventProc(
 		return;
 	}
 
-	if (!CheckWndClassName(hwnd, _T("SysTreeView32"))) {
+	if (!CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
 		return;
 	}
 
@@ -152,39 +122,10 @@ void SetStyle(HWND hwnd) {
 }
 
 BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM /*lParam*/) {
-	static const ChildInfo aciChilds[] = {
-		{ _T("ShellTabWindowClass"), nullptr, 0 },
-		{ _T("DUIViewWndClassName"), nullptr, 0 },
-		{ _T("DirectUIHWND"), nullptr, 0 },
-		{ _T("CtrlNotifySink"), nullptr, 0 },
-		{ _T("NamespaceTreeControl"), nullptr, 0 },
-		{ _T("SysTreeView32"), nullptr, 100 },
-		{ nullptr, nullptr, -1 }
-	};
+	const HWND hwndFound = FindChild(hwnd, CLASSNAME_SYSTREEVIEW32);
 
-	if (!IsWindowVisible(hwnd)) {
-		return TRUE;
-	}
-
-	const int CLASSNAME_MAX = 128;
-	TCHAR szClassName[CLASSNAME_MAX + 1];
-	szClassName[CLASSNAME_MAX] = _T('\0');
-
-	if (GetClassName(hwnd, szClassName, CLASSNAME_MAX) == 0) {
-		return TRUE;
-	}
-
-	HWND hwndTree = nullptr;
-
-	if (_tcsicmp(szClassName, _T("CabinetWClass")) == 0) {
-		hwndTree = FindChild(hwnd, aciChilds);
-	}
-	else if (_tcsicmp(szClassName, _T("#32770")) == 0) {
-		hwndTree = FindChild(hwnd, &aciChilds[1]);
-	}
-
-	if (hwndTree != nullptr) {
-		SetStyle(hwndTree);
+	if (hwndFound) {
+		SetStyle(hwndFound);
 	}
 
 	return TRUE;
