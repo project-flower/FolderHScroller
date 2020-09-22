@@ -138,7 +138,7 @@ auto AdjustExplorer = []() {
 //////////////////////////////////////////////////////////////////////////////
 // tasktray operation
 
-auto RegisterTaskTray = [](HWND hwnd) {
+bool RegisterTaskTray (HWND hwnd) {
 	memset(&g_nid, 0, sizeof(g_nid));
 	if (!g_bNoIcon) {
 		g_nid.cbSize = sizeof(g_nid);
@@ -150,11 +150,35 @@ auto RegisterTaskTray = [](HWND hwnd) {
 			g_hinstThis,
 			MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER));
 		_tcscpy_s(g_nid.szTip, g_szAppUIName);
-		if (!Shell_NotifyIcon(NIM_ADD, &g_nid)) {
+		bool bResult = false;
+
+		for (int i = 0; i < 100; ++i, Sleep(1000)) {
+			Shell_NotifyIcon(NIM_ADD, &g_nid);
+
+			if (GetLastError() == ERROR_TIMEOUT) {
+				continue;
+			}
+
+			if (Shell_NotifyIcon(NIM_MODIFY, &g_nid)) {
+				bResult = true;
+				break;
+			}
+		}
+
+		if (g_nid.hIcon) {
+			DestroyIcon(g_nid.hIcon);
+		}
+
+		if (!bResult) {
 			memset(&g_nid, 0, sizeof(g_nid));
 		}
+
+		return bResult;
 	}
-};
+	else {
+		return true;
+	}
+}
 
 auto UnregisterTaskTray = []() {
 	if (g_nid.cbSize != 0) {
@@ -201,7 +225,11 @@ LRESULT CALLBACK MainWndProc(
 	switch (nMessage) {
 	case WM_CREATE:
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
-		RegisterTaskTray(hwnd);
+
+		if (!RegisterTaskTray(hwnd)) {
+			DestroyWindow(hwnd);
+			break;
+		}
 
 		{
 			const UINT uiMessage = RegisterWindowMessage(_T("TaskbarCreated"));
@@ -251,7 +279,10 @@ LRESULT CALLBACK MainWndProc(
 		break;
 	default:
 		if ((nMessage == WM_TASKBARCREATED) && (WM_TASKBARCREATED > 0)) {
-			RegisterTaskTray(hwnd);
+			if (!RegisterTaskTray(hwnd)) {
+				DestroyWindow(hwnd);
+			}
+
 			break;
 		}
 
