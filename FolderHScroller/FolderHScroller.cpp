@@ -45,6 +45,7 @@ HANDLE g_hMutexSingleton = nullptr;
 HWINEVENTHOOK hWinEventHook = nullptr;
 
 bool g_bNoIcon = false;
+bool g_bEnabled = false;
 
 NOTIFYICONDATA g_nid;
 
@@ -197,6 +198,9 @@ auto DoPopupMenu = [](HWND hwnd) -> bool {
 		g_hinstThis, MAKEINTRESOURCE(IDR_MENU_POPUP));
 	if (hmenuPopup != nullptr) {
 		HMENU hmenuSub = GetSubMenu(hmenuPopup, 0);
+		const UINT uCheck = (g_bEnabled ? MF_UNCHECKED : MF_CHECKED);
+		CheckMenuItem(hmenuSub, IDM_APP_STOP, uCheck);
+
 		if (hmenuSub != nullptr) {
 			SetForegroundWindow(hwnd);
 			bResult = (TrackPopupMenu(
@@ -212,6 +216,35 @@ auto DoPopupMenu = [](HWND hwnd) -> bool {
 	}
 	return bResult;
 };
+
+void SetHook(bool bEnable)
+{
+	if (bEnable) {
+		if (hWinEventHook) {
+			return;
+		}
+
+		hWinEventHook = SetWinEventHook(
+			EVENT_OBJECT_CREATE,
+			EVENT_OBJECT_CREATE,
+			nullptr,
+			WinEventProc,
+			0,
+			0,
+			(WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
+		AdjustExplorer();
+	}
+	else {
+		if (!hWinEventHook) {
+			return;
+		}
+
+		UnhookWinEvent(hWinEventHook);
+		hWinEventHook = nullptr;
+	}
+
+	g_bEnabled = bEnable;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // main window procedure
@@ -240,15 +273,7 @@ LRESULT CALLBACK MainWndProc(
 			}
 		}
 
-		hWinEventHook = SetWinEventHook(
-			EVENT_OBJECT_CREATE,
-			EVENT_OBJECT_CREATE,
-			nullptr,
-			WinEventProc,
-			0,
-			0,
-			(WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
-		AdjustExplorer();
+		SetHook(true);
 		break;
 	case WM_DESTROY:
 		UnhookWinEvent(hWinEventHook);
@@ -274,6 +299,9 @@ LRESULT CALLBACK MainWndProc(
 		switch (LOWORD(wParam)) {
 		case IDM_APP_EXIT:
 			DestroyWindow(hwnd);
+			break;
+		case IDM_APP_STOP:
+			SetHook(!g_bEnabled);
 			break;
 		}
 		break;
