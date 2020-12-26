@@ -318,6 +318,8 @@ LRESULT CALLBACK MainWndProc(
 	case WM_NOTIFY_ICON:
 		switch (lParam) {
 		case WM_LBUTTONUP:
+			SetHook(!g_bEnabled);
+			break;
 		case WM_RBUTTONUP:
 			DoPopupMenu(hwnd);
 			break;
