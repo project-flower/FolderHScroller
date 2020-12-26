@@ -29,6 +29,8 @@
 
 #define CLASSNAME_SYSTREEVIEW32 _T("SysTreeView32")
 
+#define MAX_LOADSTRING 100
+
 const TCHAR g_szAppUIName[] = APP_UI_NAME;
 const TCHAR g_szAppUniqueName[] = APP_UNIQUE_NAME;
 const TCHAR g_szSingletonName[] = APP_UNIQUE_NAME _T(":Singleton");
@@ -51,9 +53,12 @@ NOTIFYICONDATA g_nid;
 
 UINT WM_TASKBARCREATED = 0;
 
+TCHAR g_szDisabled[MAX_LOADSTRING];
+
 //////////////////////////////////////////////////////////////////////////////
 // global function
 
+void SetIconTip(PNOTIFYICONDATA);
 void SetStyle(HWND);
 
 //////////////////////////////////////////////////////////////////////////////
@@ -150,7 +155,7 @@ bool RegisterTaskTray (HWND hwnd) {
 		g_nid.hIcon = LoadIcon(
 			g_hinstThis,
 			MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER));
-		_tcscpy_s(g_nid.szTip, g_szAppUIName);
+		SetIconTip(&g_nid);
 		bool bResult = false;
 
 		for (int i = 0; i < 100; ++i, Sleep(1000)) {
@@ -186,6 +191,27 @@ auto UnregisterTaskTray = []() {
 		Shell_NotifyIcon(NIM_DELETE, &g_nid);
 	}
 };
+
+void SetIconTip(PNOTIFYICONDATA lpData)
+{
+	_tcscpy_s(lpData->szTip, g_szAppUIName);
+
+	if (!g_bEnabled) {
+		_tcscat_s(lpData->szTip, _T(" ("));
+		_tcscat_s(lpData->szTip, g_szDisabled);
+		_tcscat_s(lpData->szTip, _T(")"));
+	}
+}
+
+void UpdateIconTips()
+{
+	if (g_bNoIcon) {
+		return;
+	}
+
+	SetIconTip(&g_nid);
+	Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // menu
@@ -244,6 +270,7 @@ void SetHook(bool bEnable)
 	}
 
 	g_bEnabled = bEnable;
+	UpdateIconTips();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -273,6 +300,7 @@ LRESULT CALLBACK MainWndProc(
 			}
 		}
 
+		LoadString(g_hinstThis, IDS_DISABLED, g_szDisabled, MAX_LOADSTRING);
 		SetHook(true);
 		break;
 	case WM_DESTROY:
