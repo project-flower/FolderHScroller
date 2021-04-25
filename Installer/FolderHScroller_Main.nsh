@@ -5,6 +5,7 @@ SetCompressor lzma
 # インターフェース 設定
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
+!define MUI_FINISHPAGE_RUN "$INSTDIR\FolderHScroller.exe"
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
 # ページ
 !insertmacro MUI_PAGE_WELCOME
