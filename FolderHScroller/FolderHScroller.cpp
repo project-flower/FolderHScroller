@@ -20,6 +20,7 @@
 // constant
 
 #define WM_NOTIFY_ICON		(WM_APP+100)
+#define WM_ICON_FLASHEND	(WM_NOTIFY_ICON+1)
 
 //////////////////////////////////////////////////////////////////////////////
 // global constant
@@ -50,6 +51,9 @@ bool g_bNoIcon = false;
 bool g_bEnabled = false;
 
 NOTIFYICONDATA g_nid;
+bool g_bIconFlashing = false;
+HICON g_hIcon = nullptr;
+HICON g_hIconFlash = nullptr;
 
 UINT WM_TASKBARCREATED = 0;
 
@@ -58,13 +62,17 @@ TCHAR g_szDisabled[MAX_LOADSTRING];
 //////////////////////////////////////////////////////////////////////////////
 // global function
 
+void FlashIcon(HWND hwnd);
 void SetIconTip(PNOTIFYICONDATA);
 void SetStyle(HWND);
+void TimerIconFlashEndProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
+void TurnoffIcon();
 
 //////////////////////////////////////////////////////////////////////////////
 // window operation
 
 auto CheckWndClassName = [](HWND hwnd, const TCHAR* pszClassName) -> bool {
+	FlashIcon(hwnd);
 	const int CLASSNAME_MAX = 128;
 	TCHAR szClassName[CLASSNAME_MAX+1];
 	szClassName[CLASSNAME_MAX] = _T('\0');
@@ -144,6 +152,28 @@ auto AdjustExplorer = []() {
 //////////////////////////////////////////////////////////////////////////////
 // tasktray operation
 
+void FlashIcon(HWND hwnd) {
+	if (g_bNoIcon) return;
+
+	if (!g_bIconFlashing) {
+		g_nid.hIcon = g_hIconFlash;
+		Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+		g_bIconFlashing = true;
+	}
+
+	SetTimer(nullptr, WM_ICON_FLASHEND, 500, TimerIconFlashEndProc);
+}
+
+void TimerIconFlashEndProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4) {
+	TurnoffIcon();
+}
+
+void TurnoffIcon() {
+	g_nid.hIcon = g_hIcon;
+	Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+	g_bIconFlashing = false;
+}
+
 bool RegisterTaskTray (HWND hwnd) {
 	memset(&g_nid, 0, sizeof(g_nid));
 	if (!g_bNoIcon) {
@@ -169,10 +199,6 @@ bool RegisterTaskTray (HWND hwnd) {
 				bResult = true;
 				break;
 			}
-		}
-
-		if (g_nid.hIcon) {
-			DestroyIcon(g_nid.hIcon);
 		}
 
 		if (!bResult) {
@@ -286,6 +312,14 @@ LRESULT CALLBACK MainWndProc(
 	case WM_CREATE:
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 
+		g_hIcon = LoadIcon(
+			g_hinstThis,
+			MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER));
+
+		g_hIconFlash = LoadIcon(
+			g_hinstThis,
+			MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER_FLASH));
+
 		if (!RegisterTaskTray(hwnd)) {
 			DestroyWindow(hwnd);
 			break;
@@ -306,6 +340,10 @@ LRESULT CALLBACK MainWndProc(
 	case WM_DESTROY:
 		UnhookWinEvent(hWinEventHook);
 		UnregisterTaskTray();
+
+		if (g_hIcon) DestroyIcon(g_hIcon);
+		if (g_hIconFlash) DestroyIcon(g_hIconFlash);
+
 		nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 		PostQuitMessage(0);
 		break;

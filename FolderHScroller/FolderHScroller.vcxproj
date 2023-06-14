@@ -149,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="FolderHScroller.ico" />
+    <Image Include="FolderHScroller_Flash.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
