@@ -47,6 +47,7 @@ HANDLE g_hEventTerminate = nullptr;
 HANDLE g_hMutexSingleton = nullptr;
 HWINEVENTHOOK hWinEventHook = nullptr;
 
+bool g_bMonitoring = false;
 bool g_bNoIcon = false;
 bool g_bEnabled = false;
 
@@ -72,7 +73,8 @@ void TurnoffIcon();
 // window operation
 
 auto CheckWndClassName = [](HWND hwnd, const TCHAR* pszClassName) -> bool {
-	FlashIcon(hwnd);
+	if (g_bMonitoring) FlashIcon(hwnd);
+
 	const int CLASSNAME_MAX = 128;
 	TCHAR szClassName[CLASSNAME_MAX+1];
 	szClassName[CLASSNAME_MAX] = _T('\0');
@@ -402,6 +404,8 @@ int WINAPI _tWinMain(
 	for (int i = 1; i < __argc; i++) {
 		if (_tcscmp(__targv[i], _T("/noicon")) == 0) {
 			g_bNoIcon = true;
+		} else if (_tcscmp(__targv[i], _T("/monitor")) == 0) {
+			g_bMonitoring = true;
 		} else if (_tcscmp(__targv[i], _T("/kill")) == 0) {
 			bKill = true;
 		}
