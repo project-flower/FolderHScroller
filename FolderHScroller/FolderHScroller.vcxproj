@@ -152,6 +152,8 @@
     <Image Include="FolderHScroller_Flash.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Constants.h" />
+    <ClInclude Include="FolderHScroller.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
