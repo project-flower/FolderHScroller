@@ -160,7 +160,7 @@ void TimerIconFlashEndProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unna
 }
 
 void TurnoffIcon() {
-	if (g_bNoIcon) return;
+	if (!g_bMonitoring || g_bNoIcon) return;
 
 	g_nid.hIcon = g_hIcon;
 	Shell_NotifyIcon(NIM_MODIFY, &g_nid);
@@ -168,11 +168,13 @@ void TurnoffIcon() {
 }
 
 void TurnoffIconAsync() {
+	if (!g_bMonitoring || g_bNoIcon) return;
+
 	SetTimer(nullptr, WM_ICON_FLASHEND, 500, TimerIconFlashEndProc);
 }
 
 void TurnonIcon() {
-	if (g_bIconFlashing || g_bNoIcon) return;
+	if (g_bIconFlashing || !g_bMonitoring || g_bNoIcon) return;
 
 	g_nid.hIcon = g_hIconFlash;
 	Shell_NotifyIcon(NIM_MODIFY, &g_nid);
