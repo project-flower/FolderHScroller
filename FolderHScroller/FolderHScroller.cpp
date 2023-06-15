@@ -52,11 +52,11 @@ bool CheckWndClassName(HWND hwnd, const TCHAR* pszClassName)
     TCHAR szClassName[CLASSNAME_MAX+1];
     szClassName[CLASSNAME_MAX] = _T('\0');
 
-    if (GetClassName(hwnd, szClassName, CLASSNAME_MAX) == 0) {
+    if (!GetClassName(hwnd, szClassName, CLASSNAME_MAX)) {
         szClassName[0] = _T('\0');
     }
 
-    return _tcsicmp(szClassName, pszClassName) == 0;
+    return !_tcsicmp(szClassName, pszClassName);
 }
 
 HWND FindChild(HWND hwnd, const TCHAR* szClassName)
@@ -88,7 +88,7 @@ VOID CALLBACK WinEventProc(
     DWORD         dwmsEventTime)
 {
     if (WaitForSingleObject(g_hEventTerminate, 1) != WAIT_TIMEOUT) {
-        if (g_hwndMain != nullptr) {
+        if (g_hwndMain) {
             DestroyWindow(g_hwndMain);
         }
 
@@ -127,7 +127,7 @@ void SetStyle(HWND hwnd)
 {
     LONG_PTR nStyle = GetWindowLongPtr(hwnd, GWL_STYLE);
 
-    if ((nStyle & TVS_NOHSCROLL) != 0) {
+    if (nStyle & TVS_NOHSCROLL) {
         nStyle &= ~TVS_NOHSCROLL;
         SetWindowLongPtr(hwnd, GWL_STYLE, nStyle);
     }
@@ -217,7 +217,7 @@ void TurnonIcon()
 
 void UnregisterTaskTray()
 {
-    if (g_nid.cbSize != 0) {
+    if (g_nid.cbSize) {
         Shell_NotifyIcon(NIM_DELETE, &g_nid);
     }
 }
@@ -243,20 +243,20 @@ bool DoPopupMenu(HWND hwnd)
     HMENU hmenuPopup = LoadMenu(
         g_hinstThis, MAKEINTRESOURCE(IDR_MENU_POPUP));
 
-    if (hmenuPopup != nullptr) {
+    if (hmenuPopup) {
         HMENU hmenuSub = GetSubMenu(hmenuPopup, 0);
         const UINT uCheck = (g_bEnabled ? MF_UNCHECKED : MF_CHECKED);
         CheckMenuItem(hmenuSub, IDM_APP_STOP, uCheck);
 
-        if (hmenuSub != nullptr) {
+        if (hmenuSub) {
             SetForegroundWindow(hwnd);
-            bResult = (TrackPopupMenu(
+            bResult = TrackPopupMenu(
                 hmenuSub,
                 TPM_LEFTALIGN | TPM_RIGHTBUTTON,
                 ptMenu.x, ptMenu.y,
                 0,
                 hwnd,
-                nullptr) != FALSE);
+                nullptr);
             PostMessage(hwnd, WM_NULL, 0, 0);
         }
 
@@ -327,7 +327,7 @@ LRESULT CALLBACK MainWndProc(
         {
             const UINT uiMessage = RegisterWindowMessage(_T("TaskbarCreated"));
 
-            if (uiMessage != 0)
+            if (uiMessage)
             {
                 WM_TASKBARCREATED = uiMessage;
             }
@@ -402,19 +402,21 @@ int WINAPI _tWinMain(
     g_hinstThis = hInstance;
     bool bKill = false;
 
-    for (int i = 1; i < __argc; i++) {
-        if (_tcscmp(__targv[i], _T("/noicon")) == 0) {
+    for (int i = 1; i < __argc; ++i) {
+        if (!_tcscmp(__targv[i], _T("/noicon"))) {
             g_bNoIcon = true;
-        } else if (_tcscmp(__targv[i], _T("/monitor")) == 0) {
+        }
+        else if (!_tcscmp(__targv[i], _T("/monitor"))) {
             g_bMonitoring = true;
-        } else if (_tcscmp(__targv[i], _T("/kill")) == 0) {
+        }
+        else if (!_tcscmp(__targv[i], _T("/kill"))) {
             bKill = true;
         }
     }
 
     g_hEventTerminate = CreateEvent(NULL, TRUE, FALSE, Constants::g_szTerminateName);
 
-    if (g_hEventTerminate == nullptr) {
+    if (!g_hEventTerminate) {
         return 0;
     }
 
@@ -440,7 +442,7 @@ int WINAPI _tWinMain(
     wc.hbrBackground =(HBRUSH)COLOR_WINDOW;
     wc.lpszClassName = Constants::g_szAppUniqueName;
 
-    if (RegisterClass(&wc) == 0) {
+    if (!RegisterClass(&wc)) {
         return 0;
     }
 
@@ -451,7 +453,7 @@ int WINAPI _tWinMain(
         nullptr, nullptr,
         hInstance, nullptr);
 
-    if (g_hwndMain == nullptr) {
+    if (!g_hwndMain) {
         return 0;
     }
 
