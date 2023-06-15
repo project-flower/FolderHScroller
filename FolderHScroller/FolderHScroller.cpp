@@ -63,18 +63,17 @@ TCHAR g_szDisabled[MAX_LOADSTRING];
 //////////////////////////////////////////////////////////////////////////////
 // global function
 
-void FlashIcon(HWND hwnd);
 void SetIconTip(PNOTIFYICONDATA);
 void SetStyle(HWND);
 void TimerIconFlashEndProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4);
 void TurnoffIcon();
+void TurnoffIconAsync();
+void TurnonIcon();
 
 //////////////////////////////////////////////////////////////////////////////
 // window operation
 
 auto CheckWndClassName = [](HWND hwnd, const TCHAR* pszClassName) -> bool {
-	if (g_bMonitoring) FlashIcon(hwnd);
-
 	const int CLASSNAME_MAX = 128;
 	TCHAR szClassName[CLASSNAME_MAX+1];
 	szClassName[CLASSNAME_MAX] = _T('\0');
@@ -118,11 +117,13 @@ VOID CALLBACK WinEventProc(
 		return;
 	}
 
-	if (!CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
-		return;
+	TurnonIcon();
+
+	if (CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
+		SetStyle(hwnd);
 	}
 
-	SetStyle(hwnd);
+	TurnoffIconAsync();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -154,26 +155,28 @@ auto AdjustExplorer = []() {
 //////////////////////////////////////////////////////////////////////////////
 // tasktray operation
 
-void FlashIcon(HWND hwnd) {
-	if (g_bNoIcon) return;
-
-	if (!g_bIconFlashing) {
-		g_nid.hIcon = g_hIconFlash;
-		Shell_NotifyIcon(NIM_MODIFY, &g_nid);
-		g_bIconFlashing = true;
-	}
-
-	SetTimer(nullptr, WM_ICON_FLASHEND, 500, TimerIconFlashEndProc);
-}
-
 void TimerIconFlashEndProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4) {
 	TurnoffIcon();
 }
 
 void TurnoffIcon() {
+	if (g_bNoIcon) return;
+
 	g_nid.hIcon = g_hIcon;
 	Shell_NotifyIcon(NIM_MODIFY, &g_nid);
 	g_bIconFlashing = false;
+}
+
+void TurnoffIconAsync() {
+	SetTimer(nullptr, WM_ICON_FLASHEND, 500, TimerIconFlashEndProc);
+}
+
+void TurnonIcon() {
+	if (g_bIconFlashing || g_bNoIcon) return;
+
+	g_nid.hIcon = g_hIconFlash;
+	Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+	g_bIconFlashing = true;
 }
 
 bool RegisterTaskTray (HWND hwnd) {
@@ -286,7 +289,9 @@ void SetHook(bool bEnable)
 			0,
 			0,
 			(WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
+		TurnonIcon();
 		AdjustExplorer();
+		TurnoffIconAsync();
 	}
 	else {
 		if (!hWinEventHook) {
