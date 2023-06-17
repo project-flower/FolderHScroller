@@ -403,13 +403,15 @@ int WINAPI _tWinMain(
     g_hinstThis = hInstance;
 
     for (int i = 1; i < __argc; ++i) {
-        if (!_tcscmp(__targv[i], _T("/noicon"))) {
+        const TCHAR* szArgument = __targv[i];
+
+        if (!_tcscmp(szArgument, _T("/noicon"))) {
             g_bNoIcon = true;
         }
-        else if (!_tcscmp(__targv[i], _T("/monitor"))) {
+        else if (!_tcscmp(szArgument, _T("/monitor"))) {
             g_bMonitoring = true;
         }
-        else if (!_tcscmp(__targv[i], _T("/kill"))) {
+        else if (!_tcscmp(szArgument, _T("/kill"))) {
             g_bKill = true;
         }
     }
