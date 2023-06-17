@@ -5,6 +5,7 @@
 
 void AdjustExplorer();
 bool CheckWndClassName(HWND hwnd, const TCHAR* pszClassName);
+BOOL CALLBACK DestroyExistsProcess(HWND hwnd, LPARAM lParam);
 bool DoPopupMenu(HWND hwnd);
 BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM lParam);
 HWND FindChild(HWND hwnd, const TCHAR* szClassName);

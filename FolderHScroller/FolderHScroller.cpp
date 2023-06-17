@@ -20,11 +20,10 @@
 // global variable
 
 // Window Handles
-HANDLE g_hEventTerminate = nullptr;
-HINSTANCE g_hinstThis = nullptr;
-HANDLE g_hMutexSingleton = nullptr;
 HICON g_hIcon = nullptr;
 HICON g_hIconFlash = nullptr;
+HINSTANCE g_hinstThis = nullptr;
+HANDLE g_hMutexSingleton = nullptr;
 HWINEVENTHOOK g_hWinEventHook = nullptr;
 HWND g_hwndMain = nullptr;
 
@@ -32,10 +31,11 @@ HWND g_hwndMain = nullptr;
 NOTIFYICONDATA g_nid;
 
 // Flags
-bool g_bMonitoring = false;
-bool g_bNoIcon = false;
 bool g_bEnabled = false;
 bool g_bIconFlashing = false;
+bool g_bKill = false;
+bool g_bMonitoring = false;
+bool g_bNoIcon = false;
 
 // Windows Messages
 UINT WM_TASKBARCREATED = 0;
@@ -57,6 +57,26 @@ bool CheckWndClassName(HWND hwnd, const TCHAR* pszClassName)
     }
 
     return !_tcsicmp(szClassName, pszClassName);
+}
+
+BOOL CALLBACK DestroyExistsProcess(HWND hwnd, LPARAM lParam)
+{
+    if (hwnd == g_hwndMain) {
+        return TRUE;
+    }
+
+    static TCHAR szClassName[MAX_LOADSTRING];
+
+    if (!GetClassName(hwnd, szClassName, MAX_LOADSTRING)) {
+        return TRUE;
+    }
+
+    if (_tcscmp(szClassName, Constants::g_szAppUniqueName)) {
+        return TRUE;
+    }
+
+    PostMessage(hwnd, WM_DESTROY, 0, 0);
+    return TRUE;
 }
 
 HWND FindChild(HWND hwnd, const TCHAR* szClassName)
@@ -87,14 +107,6 @@ VOID CALLBACK WinEventProc(
     DWORD         idEventThread,
     DWORD         dwmsEventTime)
 {
-    if (WaitForSingleObject(g_hEventTerminate, 1) != WAIT_TIMEOUT) {
-        if (g_hwndMain) {
-            DestroyWindow(g_hwndMain);
-        }
-
-        return;
-    }
-
     TurnonIcon();
 
     if (CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
@@ -309,6 +321,12 @@ LRESULT CALLBACK MainWndProc(
     LRESULT nResult = 0;
     switch (nMessage) {
     case WM_CREATE:
+        if (g_bKill) {
+            EnumWindows(DestroyExistsProcess, 0);
+            DestroyWindow(hwnd);
+            return 0;
+        }
+
         nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 
         g_hIcon = LoadIcon(
@@ -400,7 +418,6 @@ int WINAPI _tWinMain(
     _In_ int /*nShowCmd*/)
 {
     g_hinstThis = hInstance;
-    bool bKill = false;
 
     for (int i = 1; i < __argc; ++i) {
         if (!_tcscmp(__targv[i], _T("/noicon"))) {
@@ -410,25 +427,16 @@ int WINAPI _tWinMain(
             g_bMonitoring = true;
         }
         else if (!_tcscmp(__targv[i], _T("/kill"))) {
-            bKill = true;
+            g_bKill = true;
         }
     }
 
-    g_hEventTerminate = CreateEvent(NULL, TRUE, FALSE, Constants::g_szTerminateName);
+    g_hMutexSingleton = CreateMutex(nullptr, FALSE, Constants::g_szSingletonName);
 
-    if (!g_hEventTerminate) {
+    if (!g_hMutexSingleton) {
         return 0;
     }
-
-    if (bKill) {
-        SetEvent(g_hEventTerminate);
-        return 0;
-    }
-
-    g_hMutexSingleton = CreateMutex(NULL, TRUE, Constants::g_szSingletonName);
-
-    if ((g_hMutexSingleton == nullptr) ||
-        (GetLastError() == ERROR_ALREADY_EXISTS)) {
+    else if ((GetLastError() == ERROR_ALREADY_EXISTS) && !g_bKill) {
         return 0;
     }
 

@@ -16,5 +16,4 @@ namespace Constants
     const TCHAR g_szAppUIName[] = APP_UI_NAME;
     const TCHAR g_szAppUniqueName[] = APP_UNIQUE_NAME;
     const TCHAR g_szSingletonName[] = APP_UNIQUE_NAME _T(":Singleton");
-    const TCHAR g_szTerminateName[] = APP_UNIQUE_NAME _T(":Terminate");
 }
