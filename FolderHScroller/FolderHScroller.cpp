@@ -71,7 +71,7 @@ BOOL CALLBACK DestroyExistsProcess(HWND hwnd, LPARAM lParam)
         return TRUE;
     }
 
-    if (_tcscmp(szClassName, Constants::g_szAppUniqueName)) {
+    if (_tcscmp(szClassName, Constants::APP_UNIQUE_NAME)) {
         return TRUE;
     }
 
@@ -81,7 +81,7 @@ BOOL CALLBACK DestroyExistsProcess(HWND hwnd, LPARAM lParam)
 
 BOOL CALLBACK AnalyzeChildWindow(HWND hwnd, LPARAM lParam)
 {
-    if (CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
+    if (CheckWndClassName(hwnd, Constants::CLASSNAME_SYSTREEVIEW32)) {
         SetStyle(hwnd);
     }
 
@@ -173,7 +173,7 @@ bool RegisterTaskTray(HWND hwnd)
 
 void SetIconTip(PNOTIFYICONDATA lpData)
 {
-    _tcscpy_s(lpData->szTip, Constants::g_szAppUIName);
+    _tcscpy_s(lpData->szTip, Constants::APP_UI_NAME);
 
     if (!g_bEnabled) {
         _tcscat_s(lpData->szTip, _T(" ("));
@@ -405,18 +405,18 @@ int WINAPI _tWinMain(
     for (int i = 1; i < __argc; ++i) {
         const TCHAR* szArgument = __targv[i];
 
-        if (!_tcscmp(szArgument, _T("/noicon"))) {
+        if (!_tcscmp(szArgument, LaunchOptions::NO_ICON)) {
             g_bNoIcon = true;
         }
-        else if (!_tcscmp(szArgument, _T("/monitor"))) {
+        else if (!_tcscmp(szArgument, LaunchOptions::MONITOR)) {
             g_bMonitoring = true;
         }
-        else if (!_tcscmp(szArgument, _T("/kill"))) {
+        else if (!_tcscmp(szArgument, LaunchOptions::KILL)) {
             g_bKill = true;
         }
     }
 
-    g_hMutexSingleton = CreateMutex(nullptr, FALSE, Constants::g_szSingletonName);
+    g_hMutexSingleton = CreateMutex(nullptr, FALSE, Constants::SINGLETON_NAME);
 
     if (!g_hMutexSingleton) {
         return 0;
@@ -433,14 +433,14 @@ int WINAPI _tWinMain(
     wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground =(HBRUSH)COLOR_WINDOW;
-    wc.lpszClassName = Constants::g_szAppUniqueName;
+    wc.lpszClassName = Constants::APP_UNIQUE_NAME;
 
     if (!RegisterClass(&wc)) {
         return 0;
     }
 
     g_hwndMain = CreateWindow(
-        Constants::g_szAppUniqueName, Constants::g_szAppUIName,
+        Constants::APP_UNIQUE_NAME, Constants::APP_UI_NAME,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         nullptr, nullptr,
