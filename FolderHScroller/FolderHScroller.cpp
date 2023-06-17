@@ -81,8 +81,6 @@ BOOL CALLBACK DestroyExistsProcess(HWND hwnd, LPARAM lParam)
 
 BOOL CALLBACK AnalyzeChildWindow(HWND hwnd, LPARAM lParam)
 {
-    OutputDebugString(_T("EnumChildProc"));
-
     if (CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
         SetStyle(hwnd);
     }
@@ -105,11 +103,9 @@ VOID CALLBACK WinEventProc(
     if (IsWindowVisible(hwnd)) {
         // 一度ウィンドウに問い合わせを行わないと、
         // フォルダーペインの表示に支障が出る
-        OutputDebugString(_T("EnumChildWindows Start"));
         EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
     }
 
-    OutputDebugString(_T("EnumChildWindows End"));
     TurnoffIconAsync();
 }
 
@@ -273,8 +269,8 @@ void SetHook(bool bEnable)
         }
 
         g_hWinEventHook = SetWinEventHook(
-            EVENT_OBJECT_CREATE,
-            EVENT_OBJECT_CREATE,
+            EVENT_OBJECT_SHOW,
+            EVENT_OBJECT_SHOW,
             nullptr,
             WinEventProc,
             0,
