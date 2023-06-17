@@ -79,23 +79,16 @@ BOOL CALLBACK DestroyExistsProcess(HWND hwnd, LPARAM lParam)
     return TRUE;
 }
 
-HWND FindChild(HWND hwnd, const TCHAR* szClassName)
+BOOL CALLBACK AnalyzeChildWindow(HWND hwnd, LPARAM lParam)
 {
-    for (HWND hwndChild = GetWindow(hwnd, GW_CHILD);
-        hwndChild;
-        hwndChild = GetWindow(hwndChild, GW_HWNDNEXT)) {
-        if (CheckWndClassName(hwndChild, szClassName)) {
-            return hwndChild;
-        }
+    OutputDebugString(_T("EnumChildProc"));
 
-        const HWND hwndFound = FindChild(hwndChild, szClassName);
-
-        if (hwndFound) {
-            return hwndFound;
-        }
+    if (CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
+        SetStyle(hwnd);
     }
 
-    return nullptr;
+    // 複数存在する可能性もあるので続行する
+    return TRUE;
 }
 
 VOID CALLBACK WinEventProc(
@@ -109,29 +102,23 @@ VOID CALLBACK WinEventProc(
 {
     TurnonIcon();
 
-    if (CheckWndClassName(hwnd, CLASSNAME_SYSTREEVIEW32)) {
-        SetStyle(hwnd);
+    if (IsWindowVisible(hwnd)) {
+        // 一度ウィンドウに問い合わせを行わないと、
+        // フォルダーペインの表示に支障が出る
+        OutputDebugString(_T("EnumChildWindows Start"));
+        EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
     }
 
+    OutputDebugString(_T("EnumChildWindows End"));
     TurnoffIconAsync();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 // explorer operation
 
-void AdjustExplorer()
-{
-    EnumWindows(EnumExplorerProc, 0);
-}
-
 BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM lParam)
 {
-    const HWND hwndFound = FindChild(hwnd, CLASSNAME_SYSTREEVIEW32);
-
-    if (hwndFound) {
-        SetStyle(hwndFound);
-    }
-
+    EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
     return TRUE;
 }
 
@@ -294,7 +281,7 @@ void SetHook(bool bEnable)
             0,
             (WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
         TurnonIcon();
-        AdjustExplorer();
+        EnumWindows(EnumExplorerProc, 0);
         TurnoffIconAsync();
     }
     else {

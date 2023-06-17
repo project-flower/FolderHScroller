@@ -3,12 +3,10 @@
 #include <shellapi.h>
 #include <tchar.h>
 
-void AdjustExplorer();
 bool CheckWndClassName(HWND hwnd, const TCHAR* pszClassName);
 BOOL CALLBACK DestroyExistsProcess(HWND hwnd, LPARAM lParam);
 bool DoPopupMenu(HWND hwnd);
 BOOL CALLBACK EnumExplorerProc(HWND hwnd, LPARAM lParam);
-HWND FindChild(HWND hwnd, const TCHAR* szClassName);
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT nMessage, WPARAM wParam, LPARAM lParam);
 bool RegisterTaskTray(HWND hwnd);
 void SetHook(bool bEnable);
