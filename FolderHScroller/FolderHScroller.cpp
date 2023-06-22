@@ -23,6 +23,7 @@
 HICON g_hIcon = nullptr;
 HICON g_hIconFlash = nullptr;
 HINSTANCE g_hinstThis = nullptr;
+HMENU g_hMenuPopup = nullptr;
 HANDLE g_hMutexSingleton = nullptr;
 HWINEVENTHOOK g_hWinEventHook = nullptr;
 HWND g_hwndMain = nullptr;
@@ -106,7 +107,7 @@ VOID CALLBACK WinEventProc(
         EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
     }
 
-    TurnoffIconAsync();
+    TurnoffIcon();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -182,23 +183,14 @@ void SetIconTip(PNOTIFYICONDATA lpData)
     }
 }
 
-void CALLBACK TimerIconFlashEndProc(HWND unnamedParam1, UINT unnamedParam2, UINT_PTR unnamedParam3, DWORD unnamedParam4)
-{
-    TurnoffIcon();
-}
-
 void TurnoffIcon()
 {
     if (!g_bMonitoring || g_bNoIcon) return;
 
     g_nid.hIcon = g_hIcon;
     Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+    PostMessage(nullptr, WM_NULL, 0, 0);
     g_bIconFlashing = false;
-}
-
-void TurnoffIconAsync()
-{
-    SetTimer(nullptr, WM_ICON_FLASHEND, 500, TimerIconFlashEndProc);
 }
 
 void TurnonIcon()
@@ -207,6 +199,7 @@ void TurnonIcon()
 
     g_nid.hIcon = g_hIconFlash;
     Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+    PostMessage(nullptr, WM_NULL, 0, 0);
     g_bIconFlashing = true;
 }
 
@@ -235,27 +228,28 @@ bool DoPopupMenu(HWND hwnd)
     bool bResult = false;
     POINT ptMenu;
     GetCursorPos(&ptMenu);
-    HMENU hmenuPopup = LoadMenu(
-        g_hinstThis, MAKEINTRESOURCE(IDR_MENU_POPUP));
 
-    if (hmenuPopup) {
-        HMENU hmenuSub = GetSubMenu(hmenuPopup, 0);
+    if (g_hMenuPopup) {
+        HMENU hmenuSub = GetSubMenu(g_hMenuPopup, 0);
+
+        if (!hmenuSub) {
+            return false;
+        }
+
         const UINT uCheck = (g_bEnabled ? MF_UNCHECKED : MF_CHECKED);
         CheckMenuItem(hmenuSub, IDM_APP_STOP, uCheck);
 
-        if (hmenuSub) {
-            SetForegroundWindow(hwnd);
-            bResult = TrackPopupMenu(
-                hmenuSub,
-                TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-                ptMenu.x, ptMenu.y,
-                0,
-                hwnd,
-                nullptr);
-            PostMessage(hwnd, WM_NULL, 0, 0);
-        }
+        SetForegroundWindow(hwnd);
 
-        DestroyMenu(hmenuPopup);
+        bResult = TrackPopupMenu(
+            hmenuSub,
+            TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+            ptMenu.x, ptMenu.y,
+            0,
+            hwnd,
+            nullptr);
+
+        PostMessage(hwnd, WM_NULL, 0, 0);
     }
 
     return bResult;
@@ -278,7 +272,7 @@ void SetHook(bool bEnable)
             (WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
         TurnonIcon();
         EnumWindows(EnumExplorerProc, 0);
-        TurnoffIconAsync();
+        TurnoffIcon();
     }
     else {
         if (!g_hWinEventHook) {
@@ -312,6 +306,9 @@ LRESULT CALLBACK MainWndProc(
 
         nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
 
+        g_hMenuPopup = LoadMenu(
+            g_hinstThis, MAKEINTRESOURCE(IDR_MENU_POPUP));
+
         g_hIcon = LoadIcon(
             g_hinstThis,
             MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER));
@@ -343,6 +340,7 @@ LRESULT CALLBACK MainWndProc(
 
         if (g_hIcon) DestroyIcon(g_hIcon);
         if (g_hIconFlash) DestroyIcon(g_hIconFlash);
+        if (g_hMenuPopup) DestroyMenu(g_hMenuPopup);
 
         nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
         PostQuitMessage(0);
