@@ -14,6 +14,7 @@
 
 #include "Constants.h"
 #include "FolderHScroller.h"
+#include "Inlines.hpp"
 #include "resource.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -339,8 +340,7 @@ LRESULT CALLBACK MainWndProc(
         {
             const UINT uiMessage = RegisterWindowMessage(_T("TaskbarCreated"));
 
-            if (uiMessage)
-            {
+            if (uiMessage) {
                 WM_TASKBARCREATED = uiMessage;
             }
         }
@@ -356,12 +356,10 @@ LRESULT CALLBACK MainWndProc(
     case WM_DESTROY:
         UnhookWinEvent(g_hWinEventHook);
         UnregisterTaskTray();
-
-        if (g_hIcon) DestroyIcon(g_hIcon);
-        if (g_hIconDisabled) DestroyIcon(g_hIconDisabled);
-        if (g_hIconFlash) DestroyIcon(g_hIconFlash);
-        if (g_hMenuPopup) DestroyMenu(g_hMenuPopup);
-
+        ExecIfNotNull(DestroyIcon, g_hIcon);
+        ExecIfNotNull(DestroyIcon, g_hIconDisabled);
+        ExecIfNotNull(DestroyIcon, g_hIconFlash);
+        ExecIfNotNull(DestroyMenu, g_hMenuPopup);
         nResult = DefWindowProc(hwnd, nMessage, wParam, lParam);
         PostQuitMessage(0);
         break;

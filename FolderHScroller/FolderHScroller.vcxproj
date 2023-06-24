@@ -155,6 +155,7 @@
   <ItemGroup>
     <ClInclude Include="Constants.h" />
     <ClInclude Include="FolderHScroller.h" />
+    <ClInclude Include="Inlines.hpp" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
