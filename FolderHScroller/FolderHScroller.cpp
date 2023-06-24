@@ -21,6 +21,7 @@
 
 // Window Handles
 HICON g_hIcon = nullptr;
+HICON g_hIconDisabled = nullptr;
 HICON g_hIconFlash = nullptr;
 HINSTANCE g_hinstThis = nullptr;
 HMENU g_hMenuPopup = nullptr;
@@ -34,6 +35,7 @@ NOTIFYICONDATA g_nid;
 // Flags
 bool g_bEnabled = false;
 bool g_bIconFlashing = false;
+bool g_bIconVisible = false;
 bool g_bKill = false;
 bool g_bMonitoring = false;
 bool g_bNoIcon = false;
@@ -145,7 +147,7 @@ bool RegisterTaskTray(HWND hwnd)
         g_nid.hIcon = LoadIcon(
             g_hinstThis,
             MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER));
-        SetIconTip(&g_nid);
+        SetIconData(&g_nid);
         bool bResult = false;
 
         for (int i = 0; i < 100; ++i, Sleep(1000)) {
@@ -161,6 +163,8 @@ bool RegisterTaskTray(HWND hwnd)
             }
         }
 
+        g_bIconVisible = bResult;
+
         if (!bResult) {
             memset(&g_nid, 0, sizeof(g_nid));
         }
@@ -172,7 +176,7 @@ bool RegisterTaskTray(HWND hwnd)
     }
 }
 
-void SetIconTip(PNOTIFYICONDATA lpData)
+void SetIconData(PNOTIFYICONDATA lpData)
 {
     _tcscpy_s(lpData->szTip, Constants::APP_UI_NAME);
 
@@ -180,25 +184,29 @@ void SetIconTip(PNOTIFYICONDATA lpData)
         _tcscat_s(lpData->szTip, _T(" ("));
         _tcscat_s(lpData->szTip, g_szDisabled);
         _tcscat_s(lpData->szTip, _T(")"));
+        lpData->hIcon = g_hIconDisabled;
+    }
+    else {
+        lpData->hIcon = g_hIcon;
     }
 }
 
 void TurnoffIcon()
 {
-    if (!g_bMonitoring || g_bNoIcon) return;
+    if (!g_bMonitoring || !g_bIconVisible) return;
 
     g_nid.hIcon = g_hIcon;
-    Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+    UpdateIcon();
     PostMessage(nullptr, WM_NULL, 0, 0);
     g_bIconFlashing = false;
 }
 
 void TurnonIcon()
 {
-    if (g_bIconFlashing || !g_bMonitoring || g_bNoIcon) return;
+    if (g_bIconFlashing || !g_bMonitoring || !g_bIconVisible) return;
 
     g_nid.hIcon = g_hIconFlash;
-    Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+    UpdateIcon();
     PostMessage(nullptr, WM_NULL, 0, 0);
     g_bIconFlashing = true;
 }
@@ -210,14 +218,21 @@ void UnregisterTaskTray()
     }
 }
 
-void UpdateIconTips()
+void UpdateIcon()
+{
+    if (g_bIconVisible) {
+        Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+    }
+}
+
+void UpdateIconData()
 {
     if (g_bNoIcon) {
         return;
     }
 
-    SetIconTip(&g_nid);
-    Shell_NotifyIcon(NIM_MODIFY, &g_nid);
+    SetIconData(&g_nid);
+    UpdateIcon();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -284,7 +299,7 @@ void SetHook(bool bEnable)
     }
 
     g_bEnabled = bEnable;
-    UpdateIconTips();
+    UpdateIconData();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -313,14 +328,13 @@ LRESULT CALLBACK MainWndProc(
             g_hinstThis,
             MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER));
 
+        g_hIconDisabled = LoadIcon(
+            g_hinstThis,
+            MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER_DISABLED));
+
         g_hIconFlash = LoadIcon(
             g_hinstThis,
             MAKEINTRESOURCE(IDI_FOLDER_HSCROLLER_FLASH));
-
-        if (!RegisterTaskTray(hwnd)) {
-            DestroyWindow(hwnd);
-            break;
-        }
 
         {
             const UINT uiMessage = RegisterWindowMessage(_T("TaskbarCreated"));
@@ -333,12 +347,18 @@ LRESULT CALLBACK MainWndProc(
 
         LoadString(g_hinstThis, IDS_DISABLED, g_szDisabled, MAX_LOADSTRING);
         SetHook(true);
+
+        if (!RegisterTaskTray(hwnd)) {
+            DestroyWindow(hwnd);
+        }
+
         break;
     case WM_DESTROY:
         UnhookWinEvent(g_hWinEventHook);
         UnregisterTaskTray();
 
         if (g_hIcon) DestroyIcon(g_hIcon);
+        if (g_hIconDisabled) DestroyIcon(g_hIconDisabled);
         if (g_hIconFlash) DestroyIcon(g_hIconFlash);
         if (g_hMenuPopup) DestroyMenu(g_hMenuPopup);
 
@@ -375,6 +395,8 @@ LRESULT CALLBACK MainWndProc(
         break;
     default:
         if ((nMessage == WM_TASKBARCREATED) && (WM_TASKBARCREATED > 0)) {
+            g_bIconVisible = false;
+
             if (!RegisterTaskTray(hwnd)) {
                 DestroyWindow(hwnd);
             }
