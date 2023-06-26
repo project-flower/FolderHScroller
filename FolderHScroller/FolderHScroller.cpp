@@ -103,13 +103,12 @@ VOID CALLBACK WinEventProc(
     DWORD         dwmsEventTime)
 {
     TurnonIcon();
-
-    if (IsWindowVisible(hwnd)) {
-        // 一度ウィンドウに問い合わせを行わないと、
-        // フォルダーペインの表示に支障が出る
-        EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
-    }
-
+    // 一度ウィンドウ プロシージャを呼び出さないと
+    // フォルダーペインの表示に支障が出る
+    // SendMessage では応答しないハンドルがある
+    DWORD_PTR dwResult;
+    SendMessageTimeout(hwnd, WM_NULL, 0, 0, 0, 1000, &dwResult);
+    EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
     TurnoffIcon();
 }
 
@@ -279,8 +278,9 @@ void SetHook(bool bEnable)
         }
 
         g_hWinEventHook = SetWinEventHook(
-            EVENT_OBJECT_SHOW,
-            EVENT_OBJECT_SHOW,
+            // EVENT_OBJECT_SHOW はタスク マネージャ等で大量のイベントが発生してしまう
+            EVENT_OBJECT_CREATE,
+            EVENT_OBJECT_CREATE,
             nullptr,
             WinEventProc,
             0,
