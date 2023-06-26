@@ -23,7 +23,7 @@ Page custom OptionPage OptionPageLeave
 !insertmacro MUI_LANGUAGE "Japanese"
 # 定数
 !define Manufacturer "Project Flower"
-!define ProductVersion "2.0.0.0"
+!define ProductVersion "2.1.0.1"
 !define UninstallRegistryKey "Software\Microsoft\Windows\CurrentVersion\Uninstall\${AssemblyName}"
 # 変数
 Var CheckBox_Monitoring
