@@ -107,8 +107,11 @@ VOID CALLBACK WinEventProc(
     // フォルダーペインの表示に支障が出る
     // SendMessage では応答しないハンドルがある
     DWORD_PTR dwResult;
-    SendMessageTimeout(hwnd, WM_NULL, 0, 0, 0, 1000, &dwResult);
-    EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
+
+    if (SendMessageTimeout(hwnd, WM_NULL, 0, 0, 0, 5000, &dwResult)) {
+        EnumChildWindows(hwnd, AnalyzeChildWindow, 0);
+    }
+
     TurnoffIcon();
 }
 
