@@ -78,6 +78,10 @@ terminating the process, or use the "/kill" option.
 It terminates the FolderHScroller process that is running in the system.
 Use it when you have hidden the icon by the "/noicon" option.
 
+/monitor
+
+A red dot will be displayed on the task tray icon when the application is operating.
+
 ------------------------------------------------------------------------------
 DETAIL:
 
