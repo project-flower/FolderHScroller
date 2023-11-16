@@ -198,7 +198,7 @@ void TurnoffIcon()
 {
     if (!g_bMonitoring || !g_bIconVisible) return;
 
-    g_nid.hIcon = g_hIcon;
+    g_nid.hIcon = (g_bEnabled ? g_hIcon : g_hIconDisabled);
     UpdateIcon();
     PostMessage(nullptr, WM_NULL, 0, 0);
     g_bIconFlashing = false;
